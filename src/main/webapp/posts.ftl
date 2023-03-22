@@ -1,4 +1,3 @@
-<#import "/spring.ftl" as spring/>
 
 <html>
 <head>
@@ -6,7 +5,7 @@
 </head>
 <body>
 <h3>Posts</h3>
-<a href="posts/create">Create post</a>
+<a href="/posts/create">Create post</a>
 <br><br>
     <div>
         <table border="1">
@@ -20,10 +19,14 @@
                 <td>${post.id()}</td>
                 <td>${post.title()}</td>
                 <td>${post.description()}</td>
-                <td><a href="posts/update/${post.id()}">Edit</a></td>
+                <td><a href="/posts/update/${post.id()}">Update</a></td>
             </tr>
             </#list>
     </table>
+    <div>Total pages: ${totalPages}</div>
+    <#list 1..totalPages as item>
+        <a href="/posts/page/${item}">${item}</a>
+    </#list>
 </div>
 </body>
 </html>

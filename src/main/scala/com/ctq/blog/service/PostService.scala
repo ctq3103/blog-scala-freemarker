@@ -5,7 +5,7 @@ import com.ctq.blog.exception.NotFoundException
 import com.ctq.blog.mapper.PostMapper
 import com.ctq.blog.repository.PostRepository
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.{PageRequest, Pageable}
 import org.springframework.stereotype.Service
 
 import scala.jdk.CollectionConverters._
@@ -16,6 +16,24 @@ class PostService @Autowired()(val postRepository: PostRepository) {
 
   def getAll(): List[PostDto] = {
     PostMapper.toDtoList(postRepository.findAll().asScala.toList)
+  }
+
+  def getAll(pageNo: Int, pageSize: Int): PostsResponse = {
+    val pageable: Pageable = PageRequest.of(pageNo - 1, pageSize)
+
+    val posts = postRepository.findAll(pageable)
+    val content: List[PostDto] = PostMapper.toDtoList(posts.getContent().asScala.toList)
+
+    val postsResponse = new PostsResponse
+
+    postsResponse.content = content
+    postsResponse.pageNo = posts.getNumber
+    postsResponse.pageSize = posts.getSize
+    postsResponse.totalElements = posts.getTotalElements
+    postsResponse.totalPages = posts.getTotalPages
+    postsResponse.isLast = posts.isLast
+
+    postsResponse
   }
 
   def getAll(pageable: Pageable): PostsResponse = {

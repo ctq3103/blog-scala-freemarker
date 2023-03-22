@@ -4,7 +4,6 @@ import com.ctq.blog.dto.PostDto
 import com.ctq.blog.repository.PostRepository
 import com.ctq.blog.service.PostService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation._
@@ -16,9 +15,28 @@ import scala.jdk.CollectionConverters._
 class PostController @Autowired()(val postService: PostService, val postRepository: PostRepository) {
 
   @GetMapping
-  def getPosts(model: Model): String = {
-    val posts = postService.getAll().asJava
+  def getFirstPage(model: Model): String = {
+    getPosts(model, 1)
+    "posts"
+  }
+
+  @GetMapping(value = Array("/page/{page}"))
+  def getPosts(model: Model, @PathVariable("page") page: Int): String = {
+    val postsResponse = postService.getAll(page, 2)
+    val posts = postsResponse.content.asJava
+    val pageNo = postsResponse.pageNo
+    val pageSize = postsResponse.pageSize
+    val isLast = postsResponse.isLast
+    val totalElements = postsResponse.totalElements
+    val totalPages = postsResponse.totalPages
+
     model.addAttribute("posts", posts)
+    model.addAttribute("pageNo", pageNo)
+    model.addAttribute("pageSize", pageSize)
+    model.addAttribute("isLast", isLast)
+    model.addAttribute("totalElements", totalElements)
+    model.addAttribute("totalPages", totalPages)
+
     "posts"
   }
 
@@ -26,7 +44,8 @@ class PostController @Autowired()(val postService: PostService, val postReposito
   def createPostForm(model: Model): String = {
     val postDto = new PostDto
     model.addAttribute("postDto", postDto)
-    "createPost"
+    model.addAttribute("isUpdate", false)
+    "postForm"
   }
 
   @PostMapping(value = Array("/create"))
@@ -41,11 +60,11 @@ class PostController @Autowired()(val postService: PostService, val postReposito
       newPost.content = content
       newPost.description = description
       postService.create(newPost)
-      "redirect:/posts"
+      "redirect:/"
     } else {
       val error = "Title, Description and Content are required!"
       model.addAttribute("errorMessage", error)
-      "createPost"
+      "postForm"
     }
   }
 
@@ -53,7 +72,8 @@ class PostController @Autowired()(val postService: PostService, val postReposito
   def updatePostForm(@PathVariable("id") id: Long, model: Model): String = {
     val postDto = postService.getById(id)
     model.addAttribute("postDto", postDto)
-    "updatePost"
+    model.addAttribute("isUpdate", true)
+    "postForm"
   }
 
   @PostMapping(value = Array("/update/{id}"))
@@ -65,43 +85,12 @@ class PostController @Autowired()(val postService: PostService, val postReposito
     if (!title.isEmpty || !content.isEmpty || !description.isEmpty) {
       postDto.id = id
       postService.update(postDto)
-      "redirect:/posts"
+      "redirect:/"
     } else {
       val error = "Title, Description and Content are required!"
       model.addAttribute("errorMessage", error)
-      "updatePost"
+      "postForm"
     }
   }
-
-  //    @GetMapping(Array("/showFormForUpdate/{id}")) def showFormForUpdate(@PathVariable(value = "id") id: Long, model: Model) = { // get employee from the service
-  //      val employee = employeeService.getEmployeeById(id)
-  //      // set employee as a model attribute to pre-populate the form
-  //      model.addAttribute("employee", employee)
-  //      "update_employee"
-  //    }
-  // }
-
-
-  //  @RequestMapping(value = Array("/posts/{id}"), method = Array(RequestMethod.GET))
-  //  @ResponseStatus(HttpStatus.OK)
-  //  def getPostById(@PathVariable id: Long): PostDto = postService.getById(id)
-  //
-  //  @RequestMapping(value = Array("/posts"), method = Array(RequestMethod.POST))
-  //  @ResponseStatus(HttpStatus.CREATED)
-  //  def createPost(@Valid @RequestBody postDto: PostDto, bindingResult: BindingResult): PostDto = {
-  //    if (bindingResult.hasErrors) throw BadRequestException(bindingResult.getFieldError.getDefaultMessage)
-  //    postService.create(postDto)
-  //  }
-  //
-  //  @RequestMapping(value = Array("/posts/{id}"), method = Array(RequestMethod.PUT))
-  //  @ResponseStatus(HttpStatus.OK)
-  //  def updatePost(@PathVariable id: Long, @Valid @RequestBody postDto: PostDto, bindingResult: BindingResult): PostDto = {
-  //    if (bindingResult.hasErrors) throw BadRequestException(bindingResult.getFieldError.getDefaultMessage)
-  //    postService.update(id, postDto)
-  //  }
-  //
-  //  @RequestMapping(value = Array("/posts/{id}"), method = Array(RequestMethod.DELETE))
-  //  @ResponseStatus(HttpStatus.OK)
-  //  def deletePost(@PathVariable id: Long): PostDto = postService.delete(id)
 
 }
